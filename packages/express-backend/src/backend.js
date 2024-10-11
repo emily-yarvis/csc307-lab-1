@@ -1,8 +1,13 @@
 // backend.js
 import express from "express";
+import cors from "cors";
+
 
 const app = express();
 const port = 8000;
+
+app.use(cors());
+app.use(express.json());
 
 const users = {
     users_list: [
@@ -34,7 +39,8 @@ const users = {
     ]
   };
 
-app.use(express.json());
+
+
 
 
 const findUserByName = (name) => {
@@ -63,20 +69,35 @@ const addUser = (user) => {
   return user;
 };
 
+const idMaker = () =>{
+  return Math.round(Math.random() * 100000)
+}
+
 app.post("/users", (req, res) => {
   const userToAdd = req.body;
+  userToAdd.id = idMaker();
   addUser(userToAdd);
-  res.send();
+  res.status(201).send(userToAdd);
+  
 });
 
+
+
+const findUserInList = (user) => {
+  for(let i=0; i<users["users_list"].length; i++){
+      if ( JSON.stringify(user) == JSON.stringify(users["users_list"][i])) {
+          return i;
+      }
+  }
+  return -1
+};
+
 const deleteUser = (user) => {
-  const i = users["users_list"].indexOf(user);
-
-if (i !== -1){
-  users["users_list"].splice(index,1);
-}
-  return user;
-
+  const index = findUserInList(user);
+    if (index > -1) {
+        users["users_list"].splice(index, 1);
+    }
+    return user;
 };
 
 app.delete("/users", (req, res) => {
@@ -84,7 +105,7 @@ app.delete("/users", (req, res) => {
   const deletedUser = deleteUser(userToDelete);
 
   if (deletedUser) {
-    res.status(200).send({ message: "User was deleted", user: deletedUser });
+    res.status(204).send({ message: "User was deleted", user: deletedUser });
   } else {
     res.status(404).send({ message: "User was not found" });
   }
